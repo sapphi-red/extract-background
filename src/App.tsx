@@ -1,4 +1,11 @@
-import React, { FC, useState, useReducer, Reducer } from 'react'
+import React, {
+  FC,
+  useState,
+  useReducer,
+  Reducer,
+  Dispatch,
+  useRef
+} from 'react'
 import './App.sass'
 import InputVideo from './InputVideo'
 
@@ -17,27 +24,71 @@ const progressReducer: Reducer<Progress, ProgressAction> = (state, action) => {
   }
 }
 
+const recreateFileUrl = (
+  setFileUrl: Dispatch<string>,
+  file: File | null,
+  prevFileUrl: string
+) => {
+  if (prevFileUrl !== '') {
+    URL.revokeObjectURL(prevFileUrl)
+  }
+  setFileUrl(file ? URL.createObjectURL(file) : '')
+}
+
+const exec = async ($video: HTMLVideoElement, progress: () => void) => {
+  const { duration } = $video
+  while ($video.currentTime < duration) {
+    if ($video.readyState < 3) {
+      await new Promise(resolve => {
+        $video.oncanplay = resolve
+      })
+    }
+    try {
+      const imageb = await createImageBitmap($video)
+      console.log(imageb)
+    } catch (e) {
+      console.warn(e)
+    }
+    progress()
+    $video.currentTime += 1
+  }
+}
+
 const App: FC = () => {
-  const [hasFile, setHasFile] = useState(false)
+  const [fileUrl, setFileUrl] = useState('')
   const [progress, dispatchProgress] = useReducer(progressReducer, { value: 0 })
 
+  const $video = useRef<HTMLVideoElement>(null)
+
   return (
-    <div className="App">
+    <div id="App">
       <InputVideo
         disabled={progress.value > 0}
-        onChange={hasFile => {
-          setHasFile(hasFile)
+        onChange={file => {
+          recreateFileUrl(setFileUrl, file, fileUrl)
         }}
       />
       <button
-        disabled={!hasFile}
+        disabled={fileUrl === ''}
         onClick={() => {
-          dispatchProgress({ type: 'increment' })
+          if ($video.current) {
+            exec($video.current, () => {
+              dispatchProgress({ type: 'increment' })
+            })
+          }
         }}
       >
         開始
       </button>
       {progress.value}
+      {fileUrl !== '' && (
+        <video
+          src={fileUrl}
+          controls
+          ref={$video}
+          style={{ maxWidth: '100%' }}
+        />
+      )}
     </div>
   )
 }

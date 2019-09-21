@@ -1,33 +1,26 @@
-import React, {
-  FC,
-  useState,
-  ChangeEvent,
-  SetStateAction,
-  Dispatch
-} from 'react'
+import React, { FC, useState, ChangeEvent, Dispatch } from 'react'
 
 const NO_FILE = '選択されていません'
 
-type onInputChange = (hasFile: boolean) => void
+type onInputChange = (file: File | null) => void
 
 const onChange = (
   e: ChangeEvent<HTMLInputElement>,
-  setFilename: Dispatch<SetStateAction<string>>,
+  setFilename: Dispatch<string>,
   cb: onInputChange
 ) => {
-  let hasFile = false
+  let file = null
   const { files } = e.target
   if (files) {
-    const file = files.item(0)
+    file = files.item(0)
     if (file) {
       setFilename(file.name)
-      hasFile = true
     }
   }
-  if (!hasFile) {
+  if (file == null) {
     setFilename(NO_FILE)
   }
-  cb(hasFile)
+  cb(file)
 }
 
 const InputVideo: FC<{ disabled: boolean; onChange: onInputChange }> = ({
