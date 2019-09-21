@@ -42,6 +42,7 @@ const recreateFileUrl = (
 
 const exec = async ($video: HTMLVideoElement, progress: () => void) => {
   const { duration } = $video
+  $video.currentTime = 0
   while ($video.currentTime < duration) {
     if ($video.readyState < 3) {
       await new Promise(resolve => {
