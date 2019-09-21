@@ -12,15 +12,20 @@ import InputVideo from './InputVideo'
 interface Progress {
   value: number
 }
-type ProgressAction = IncrementAction
+type ProgressAction = IncrementAction | ResetAction
 interface IncrementAction {
   type: 'increment'
+}
+interface ResetAction {
+  type: 'reset'
 }
 
 const progressReducer: Reducer<Progress, ProgressAction> = (state, action) => {
   switch (action.type) {
     case 'increment':
       return { value: state.value + 1 }
+    case 'reset':
+      return { value: 0 }
   }
 }
 
@@ -70,11 +75,12 @@ const App: FC = () => {
       />
       <button
         disabled={fileUrl === ''}
-        onClick={() => {
+        onClick={async () => {
           if ($video.current) {
-            exec($video.current, () => {
+            await exec($video.current, () => {
               dispatchProgress({ type: 'increment' })
             })
+            dispatchProgress({ type: 'reset' })
           }
         }}
       >
