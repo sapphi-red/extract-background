@@ -4,6 +4,8 @@
   "private": true,
   "dependencies": {
     "@tensorflow-models/body-pix": "^1.1.2",
+    "@tensorflow/tfjs-converter": "^1.2.9",
+    "@tensorflow/tfjs-core": "^1.2.9",
     "@types/jest": "24.0.18",
     "@types/node": "12.7.5",
     "@types/react": "16.9.2",

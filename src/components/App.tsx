@@ -9,6 +9,12 @@ import React, {
 import './App.sass'
 import InputVideo from './InputVideo'
 
+import BodyPixWorkerAbstract, {
+  BodyPixWorker,
+  Config
+} from '../worker/BodyPix.worker'
+import { wrap, transfer } from 'comlink'
+
 interface Progress {
   value: number
 }
@@ -40,9 +46,45 @@ const recreateFileUrl = (
   setFileUrl(file ? URL.createObjectURL(file) : '')
 }
 
-const exec = async ($video: HTMLVideoElement, progress: () => void) => {
+const getBodyPix = async (config: Config, outputCanvas: OffscreenCanvas) => {
+  const WrappedBodyPix = wrap<typeof BodyPixWorker>(new BodyPixWorkerAbstract())
+  const bodyPix = await new WrappedBodyPix()
+  await bodyPix.init(
+    config,
+    transfer(outputCanvas, [(outputCanvas as unknown) as Transferable])
+  )
+  return bodyPix
+}
+
+const exec = async (
+  $video: HTMLVideoElement,
+  $output: HTMLCanvasElement,
+  progress: () => void
+) => {
+  if ($video.readyState < 3) {
+    await new Promise(resolve => {
+      $video.oncanplay = resolve
+    })
+  }
+  const imgb = await createImageBitmap($video)
+  const { width, height } = imgb
+  $output.width = width
+  $output.height = height
+  console.log(width, height)
+
   const { duration } = $video
   $video.currentTime = 0
+
+  const output = $output.transferControlToOffscreen()
+
+  const bodyPix = await getBodyPix(
+    {
+      width,
+      height
+    },
+    output
+  )
+
   while ($video.currentTime < duration) {
     if ($video.readyState < 3) {
       await new Promise(resolve => {
@@ -52,6 +94,7 @@ const exec = async ($video: HTMLVideoElement, progress: () => void) => {
     try {
       const imageb = await createImageBitmap($video)
       console.log(imageb)
+      await bodyPix.apply(transfer(imageb, [imageb]))
     } catch (e) {
       console.warn(e)
     }
@@ -65,6 +108,7 @@ const App: FC = () => {
   const [progress, dispatchProgress] = useReducer(progressReducer, { value: 0 })
 
   const $video = useRef<HTMLVideoElement>(null)
+  const $output = useRef<HTMLCanvasElement>(null)
 
   return (
     <div id="App">
@@ -77,8 +121,8 @@ const App: FC = () => {
       <button
         disabled={fileUrl === ''}
         onClick={async () => {
-          if ($video.current) {
-            await exec($video.current, () => {
+          if ($video.current && $output.current) {
+            await exec($video.current, $output.current, () => {
               dispatchProgress({ type: 'increment' })
             })
             dispatchProgress({ type: 'reset' })
@@ -93,9 +137,10 @@ const App: FC = () => {
           src={fileUrl}
           controls
           ref={$video}
-          style={{ maxWidth: '100%' }}
+          style={{ display: 'none' }}
         />
       )}
+      <canvas ref={$output} style={{ maxWidth: '100%' }} />
     </div>
   )
 }
