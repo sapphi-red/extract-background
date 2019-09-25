@@ -132,15 +132,8 @@ const App: FC = () => {
         開始
       </button>
       {progress.value}
-      {fileUrl !== '' && (
-        <video
-          src={fileUrl}
-          controls
-          ref={$video}
-          style={{ display: 'none' }}
-        />
-      )}
-      <canvas ref={$output} style={{ maxWidth: '100%' }} />
+      <video id="input" src={fileUrl} controls ref={$video} />
+      <canvas id="output" ref={$output} />
     </div>
   )
 }
