@@ -67,7 +67,11 @@ export class BodyPixWorker {
     return background
   }
 
-  private async cutBackground(bodyPix: BodyPix, input: OffscreenCanvas, theshold: number) {
+  private async cutBackground(
+    bodyPix: BodyPix,
+    input: OffscreenCanvas,
+    theshold: number
+  ) {
     const seg = await bodyPix.estimatePersonSegmentation(
       (input as unknown) as HTMLCanvasElement,
       STRIDE,
