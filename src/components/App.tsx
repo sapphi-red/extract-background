@@ -1,13 +1,7 @@
-import React, {
-  FC,
-  useState,
-  useReducer,
-  Reducer,
-  Dispatch,
-  useRef
-} from 'react'
+import React, { FC, Dispatch, useRef } from 'react'
 import './App.sass'
 import InputVideo from './InputVideo'
+import StateContainer from '../container/StateContainer'
 
 import BodyPixWorkerAbstract, {
   BodyPixWorker,
@@ -15,27 +9,7 @@ import BodyPixWorkerAbstract, {
 } from '../worker/BodyPix.worker'
 import { wrap, transfer } from 'comlink'
 
-interface Progress {
-  value: number
-}
-type ProgressAction = IncrementAction | ResetAction
-interface IncrementAction {
-  type: 'increment'
-}
-interface ResetAction {
-  type: 'reset'
-}
-
 const THESHOLDS = [0.1, 0.2, 0.3]
-
-const progressReducer: Reducer<Progress, ProgressAction> = (state, action) => {
-  switch (action.type) {
-    case 'increment':
-      return { value: state.value + 1 }
-    case 'reset':
-      return { value: 0 }
-  }
-}
 
 const recreateFileUrl = (
   setFileUrl: Dispatch<string>,
@@ -107,8 +81,7 @@ const exec = async (
 }
 
 const App: FC = () => {
-  const [fileUrl, setFileUrl] = useState('')
-  const [progress, dispatchProgress] = useReducer(progressReducer, { value: 0 })
+  const state = StateContainer.useContainer()
 
   const $video = useRef<HTMLVideoElement>(null)
   const $output = useRef<HTMLCanvasElement>(null)
@@ -121,26 +94,26 @@ const App: FC = () => {
         また、Chromeでしか動作しません。
       </p>
       <InputVideo
-        disabled={progress.value > 0}
+        disabled={state.progress.value > 0}
         onChange={file => {
-          recreateFileUrl(setFileUrl, file, fileUrl)
+          recreateFileUrl(state.setFileUrl, file, state.fileUrl)
         }}
       />
       <button
-        disabled={fileUrl === ''}
+        disabled={state.fileUrl === ''}
         onClick={async () => {
           if ($video.current && $output.current) {
             await exec($video.current, $output.current, () => {
-              dispatchProgress({ type: 'increment' })
+              state.incrementProgress()
             })
-            dispatchProgress({ type: 'reset' })
+            state.resetProgress()
           }
         }}
       >
         開始
       </button>
-      {progress.value}
-      <video id="input" src={fileUrl} controls ref={$video} />
+      {state.progress.value}
+      <video id="input" src={state.fileUrl} controls ref={$video} />
       <canvas id="output" ref={$output} />
     </div>
   )
