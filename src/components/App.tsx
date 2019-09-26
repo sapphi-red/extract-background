@@ -112,6 +112,11 @@ const App: FC = () => {
 
   return (
     <div id="App">
+      <p>
+        動画から人物を取り除いた背景を抽出します。
+        定点からの映像でしか正常に動作しません。
+        また、Chromeでしか動作しません。
+      </p>
       <InputVideo
         disabled={progress.value > 0}
         onChange={file => {
