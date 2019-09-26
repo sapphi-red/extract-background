@@ -9,7 +9,7 @@ import BodyPixWorkerAbstract, {
 } from '../worker/BodyPix.worker'
 import { wrap, transfer } from 'comlink'
 
-const THESHOLDS = [0.1, 0.2, 0.3]
+const THESHOLDS = [0.05, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.25, 0.3]
 
 const getBodyPix = async (config: Config, outputCanvas: OffscreenCanvas) => {
   const WrappedBodyPix = wrap<typeof BodyPixWorker>(new BodyPixWorkerAbstract())
@@ -49,6 +49,7 @@ const exec = async (
   )
 
   for (const theshold of THESHOLDS) {
+    console.log(`start THESHOLD: ${theshold}`)
     $video.currentTime = 0
     while ($video.currentTime < duration) {
       if ($video.readyState < 3) {
@@ -58,8 +59,12 @@ const exec = async (
       }
       try {
         const imageb = await createImageBitmap($video)
-        console.log(imageb)
-        await bodyPix.apply(transfer(imageb, [imageb]), theshold)
+        console.log($video.currentTime)
+        const completed = await bodyPix.apply(
+          transfer(imageb, [imageb]),
+          theshold
+        )
+        if (completed) return
       } catch (e) {
         console.warn(e)
       }
@@ -78,7 +83,7 @@ const App: FC = () => {
   return (
     <div id="App">
       <p>
-        動画から人物を取り除いた背景を抽出します。
+        動画から人物(一人に限る)を取り除いた背景を抽出します。
         定点からの映像でしか正常に動作しません。
         また、Chromeでしか動作しません。
       </p>

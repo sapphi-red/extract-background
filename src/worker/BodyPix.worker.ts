@@ -25,6 +25,8 @@ export class BodyPixWorker {
   private bodyPixLoading = false
   private bodyPix: BodyPix | null = null
 
+  private completedPixels: Uint8Array | null = null
+
   public async init(config: Config, canvas: OffscreenCanvas) {
     this.config = config
     this.outputCanvas = canvas
@@ -67,17 +69,16 @@ export class BodyPixWorker {
     return background
   }
 
-  private async cutBackground(
+  private getPersonSeg(
     bodyPix: BodyPix,
     input: OffscreenCanvas,
     theshold: number
   ) {
-    const seg = await bodyPix.estimatePersonSegmentation(
+    return bodyPix.estimatePersonSegmentation(
       (input as unknown) as HTMLCanvasElement,
       STRIDE,
       theshold
     )
-    return this.createBackground(seg, input)
   }
 
   async apply(inputImg: ImageBitmap, theshold: number) {
@@ -89,11 +90,31 @@ export class BodyPixWorker {
     }
 
     const ctx = output.getContext('2d')!
-    const background = await this.cutBackground(this.bodyPix!, input, theshold)
+
+    const personSeg = await this.getPersonSeg(this.bodyPix!, input, theshold)
+
+    if (this.completedPixels === null) {
+      this.completedPixels = personSeg.data
+    } else {
+      let completed = true
+      for (let i = 0; i < personSeg.data.length; i++) {
+        if (this.completedPixels[i] === 1) {
+          completed = false
+        }
+        if (personSeg.data[i] === 0 && this.completedPixels[i] === 1) {
+          this.completedPixels[i] = 0
+        }
+      }
+      if (completed) {
+        return true
+      }
+    }
+
+    const background = await this.createBackground(personSeg, input)
 
     // 人物以外の部分を裏に書き込み
     this.drawWithCompositing(ctx, background, 'destination-over')
-    return
+    return false
   }
 }
 
