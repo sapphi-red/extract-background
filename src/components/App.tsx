@@ -1,4 +1,4 @@
-import React, { FC, Dispatch, useRef } from 'react'
+import React, { FC, useRef } from 'react'
 import './App.sass'
 import InputVideo from './InputVideo'
 import StateContainer from '../container/StateContainer'
@@ -10,17 +10,6 @@ import BodyPixWorkerAbstract, {
 import { wrap, transfer } from 'comlink'
 
 const THESHOLDS = [0.1, 0.2, 0.3]
-
-const recreateFileUrl = (
-  setFileUrl: Dispatch<string>,
-  file: File | null,
-  prevFileUrl: string
-) => {
-  if (prevFileUrl !== '') {
-    URL.revokeObjectURL(prevFileUrl)
-  }
-  setFileUrl(file ? URL.createObjectURL(file) : '')
-}
 
 const getBodyPix = async (config: Config, outputCanvas: OffscreenCanvas) => {
   const WrappedBodyPix = wrap<typeof BodyPixWorker>(new BodyPixWorkerAbstract())
@@ -93,12 +82,7 @@ const App: FC = () => {
         定点からの映像でしか正常に動作しません。
         また、Chromeでしか動作しません。
       </p>
-      <InputVideo
-        disabled={state.progress.value > 0}
-        onChange={file => {
-          recreateFileUrl(state.setFileUrl, file, state.fileUrl)
-        }}
-      />
+      <InputVideo />
       <button
         disabled={state.fileUrl === ''}
         onClick={async () => {

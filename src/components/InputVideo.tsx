@@ -1,13 +1,23 @@
 import React, { FC, useState, ChangeEvent, Dispatch } from 'react'
+import StateContainer from "../container/StateContainer"
 
 const NO_FILE = '選択されていません'
 
-type onInputChange = (file: File | null) => void
+const recreateFileUrl = (
+  setFileUrl: Dispatch<string>,
+  file: File | null,
+  prevFileUrl: string
+) => {
+  if (prevFileUrl !== '') {
+    URL.revokeObjectURL(prevFileUrl)
+  }
+  setFileUrl(file ? URL.createObjectURL(file) : '')
+}
 
 const onChange = (
   e: ChangeEvent<HTMLInputElement>,
   setFilename: Dispatch<string>,
-  cb: onInputChange
+  state: ReturnType<typeof StateContainer.useContainer>
 ) => {
   let file = null
   const { files } = e.target
@@ -20,14 +30,14 @@ const onChange = (
   if (file == null) {
     setFilename(NO_FILE)
   }
-  cb(file)
+  recreateFileUrl(state.setFileUrl, file, state.fileUrl)
 }
 
-const InputVideo: FC<{ disabled: boolean; onChange: onInputChange }> = ({
-  disabled,
-  onChange: cb
-}) => {
+const InputVideo: FC<{}> = () => {
+  const state = StateContainer.useContainer()
   const [filename, setFilename] = useState(NO_FILE)
+
+  const disabled = state.progress.value > 0
 
   return (
     <div className="input-video" data-disabled={disabled}>
@@ -37,7 +47,7 @@ const InputVideo: FC<{ disabled: boolean; onChange: onInputChange }> = ({
           type="file"
           accept="video/*"
           disabled={disabled}
-          onChange={e => onChange(e, setFilename, cb)}
+          onChange={e => onChange(e, setFilename, state)}
         />
         <span className="filename">{filename}</span>
       </label>
