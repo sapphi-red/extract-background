@@ -9,7 +9,7 @@ import BodyPixWorkerAbstract, {
 } from '../worker/BodyPix.worker'
 import { wrap, transfer } from 'comlink'
 
-const THESHOLDS = [0.05, 0.1, 0.12, 0.14, 0.16, 0.18, 0.2, 0.25, 0.3]
+const THESHOLDS = [0.05, 0.1, 0.2, 0.3, 0.5, 0.8, 1.0]
 
 const getBodyPix = async (config: Config, outputCanvas: OffscreenCanvas) => {
   const WrappedBodyPix = wrap<typeof BodyPixWorker>(new BodyPixWorkerAbstract())
