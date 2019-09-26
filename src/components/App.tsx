@@ -26,6 +26,8 @@ interface ResetAction {
   type: 'reset'
 }
 
+const THESHOLDS = [0.1, 0.2, 0.3]
+
 const progressReducer: Reducer<Progress, ProgressAction> = (state, action) => {
   switch (action.type) {
     case 'increment':
@@ -73,8 +75,6 @@ const exec = async (
   console.log(width, height)
 
   const { duration } = $video
-  $video.currentTime = 0
-
   const output = $output.transferControlToOffscreen()
 
   const bodyPix = await getBodyPix(
@@ -85,21 +85,24 @@ const exec = async (
     output
   )
 
-  while ($video.currentTime < duration) {
-    if ($video.readyState < 3) {
-      await new Promise(resolve => {
-        $video.oncanplay = resolve
-      })
+  for (const theshold of THESHOLDS) {
+    $video.currentTime = 0
+    while ($video.currentTime < duration) {
+      if ($video.readyState < 3) {
+        await new Promise(resolve => {
+          $video.oncanplay = resolve
+        })
+      }
+      try {
+        const imageb = await createImageBitmap($video)
+        console.log(imageb)
+        await bodyPix.apply(transfer(imageb, [imageb]), theshold)
+      } catch (e) {
+        console.warn(e)
+      }
+      progress()
+      $video.currentTime += 1
     }
-    try {
-      const imageb = await createImageBitmap($video)
-      console.log(imageb)
-      await bodyPix.apply(transfer(imageb, [imageb]))
-    } catch (e) {
-      console.warn(e)
-    }
-    progress()
-    $video.currentTime += 1
   }
 }
 

@@ -9,7 +9,6 @@ import { PersonSegmentation } from '@tensorflow-models/body-pix/dist/types'
 declare const self: Worker
 
 const STRIDE = 32
-const THESHOLD = 0.3
 
 export interface Config {
   width: number
@@ -68,16 +67,16 @@ export class BodyPixWorker {
     return background
   }
 
-  private async cutBackground(bodyPix: BodyPix, input: OffscreenCanvas) {
+  private async cutBackground(bodyPix: BodyPix, input: OffscreenCanvas, theshold: number) {
     const seg = await bodyPix.estimatePersonSegmentation(
       (input as unknown) as HTMLCanvasElement,
       STRIDE,
-      THESHOLD
+      theshold
     )
     return this.createBackground(seg, input)
   }
 
-  async apply(inputImg: ImageBitmap) {
+  async apply(inputImg: ImageBitmap, theshold: number) {
     const output = this.outputCanvas
     const input = this.videoCanvas
     {
@@ -86,7 +85,7 @@ export class BodyPixWorker {
     }
 
     const ctx = output.getContext('2d')!
-    const background = await this.cutBackground(this.bodyPix!, input)
+    const background = await this.cutBackground(this.bodyPix!, input, theshold)
 
     // 人物以外の部分を裏に書き込み
     this.drawWithCompositing(ctx, background, 'destination-over')
