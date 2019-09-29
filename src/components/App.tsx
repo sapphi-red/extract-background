@@ -23,7 +23,7 @@ const getBodyPix = async (config: Config, outputCanvas: OffscreenCanvas) => {
 
 const exec = async (
   $video: HTMLVideoElement,
-  $output: HTMLCanvasElement,
+  $output: HTMLDivElement,
   progress: () => void
 ) => {
   if ($video.readyState < 3) {
@@ -33,12 +33,16 @@ const exec = async (
   }
   const imgb = await createImageBitmap($video)
   const { width, height } = imgb
-  $output.width = width
-  $output.height = height
+
+  $output.innerHTML = ''
+  const $canvas = document.createElement('canvas')
+  $canvas.width = width
+  $canvas.height = height
+  $output.appendChild($canvas)
   console.log(width, height)
 
   const { duration } = $video
-  const output = $output.transferControlToOffscreen()
+  const output = $canvas.transferControlToOffscreen()
 
   const bodyPix = await getBodyPix(
     {
@@ -78,7 +82,7 @@ const App: FC = () => {
   const state = StateContainer.useContainer()
 
   const $video = useRef<HTMLVideoElement>(null)
-  const $output = useRef<HTMLCanvasElement>(null)
+  const $output = useRef<HTMLDivElement>(null)
 
   return (
     <div id="App">
@@ -103,7 +107,7 @@ const App: FC = () => {
       </button>
       {state.progress.value}
       <video id="input" src={state.fileUrl} controls ref={$video} />
-      <canvas id="output" ref={$output} />
+      <div id="output" ref={$output}></div>
     </div>
   )
 }
