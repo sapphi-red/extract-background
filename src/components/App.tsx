@@ -24,7 +24,7 @@ const getBodyPix = async (config: Config, outputCanvas: OffscreenCanvas) => {
 const exec = async (
   $video: HTMLVideoElement,
   $output: HTMLDivElement,
-  progress: () => void
+  state: ReturnType<typeof StateContainer.useContainer>
 ) => {
   if ($video.readyState < 3) {
     await new Promise(resolve => {
@@ -55,6 +55,7 @@ const exec = async (
   for (const theshold of THESHOLDS) {
     console.log(`start THESHOLD: ${theshold}`)
     $video.currentTime = 0
+    state.incrementProgressPhase()
     while ($video.currentTime < duration) {
       if ($video.readyState < 3) {
         await new Promise(resolve => {
@@ -63,16 +64,16 @@ const exec = async (
       }
       try {
         const imageb = await createImageBitmap($video)
-        console.log($video.currentTime)
-        const completed = await bodyPix.apply(
+        const progress = await bodyPix.apply(
           transfer(imageb, [imageb]),
           theshold
         )
-        if (completed) return
+        if (progress === -1) return
+        console.log((progress / (width * height)) * 100)
+        state.setProgressValue((progress / (width * height)) * 100)
       } catch (e) {
         console.warn(e)
       }
-      progress()
       $video.currentTime += 1
     }
   }
@@ -93,19 +94,17 @@ const App: FC = () => {
       </p>
       <InputVideo />
       <button
-        disabled={state.fileUrl === ''}
+        disabled={state.fileUrl === '' || state.progress.phase !== 0}
         onClick={async () => {
           if ($video.current && $output.current) {
-            await exec($video.current, $output.current, () => {
-              state.incrementProgress()
-            })
+            await exec($video.current, $output.current, state)
             state.resetProgress()
           }
         }}
       >
         開始
       </button>
-      {state.progress.value}
+      {state.progress.phase} | {state.progress.value}
       <video id="input" src={state.fileUrl} controls ref={$video} />
       <div id="output" ref={$output}></div>
     </div>

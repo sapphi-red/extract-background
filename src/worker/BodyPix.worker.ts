@@ -26,6 +26,7 @@ export class BodyPixWorker {
   private bodyPix: BodyPix | null = null
 
   private completedPixels: Uint8Array | null = null
+  private completedCount = 0
 
   public async init(config: Config, canvas: OffscreenCanvas) {
     this.config = config
@@ -96,6 +97,9 @@ export class BodyPixWorker {
 
     if (this.completedPixels === null) {
       this.completedPixels = personSeg.data
+      for (let i = 0; i < personSeg.data.length; i++) {
+        if (personSeg.data[i] === 0) this.completedCount++
+      }
     } else {
       let completed = true
       for (let i = 0; i < personSeg.data.length; i++) {
@@ -104,10 +108,11 @@ export class BodyPixWorker {
         }
         if (personSeg.data[i] === 0 && this.completedPixels[i] === 1) {
           this.completedPixels[i] = 0
+          this.completedCount++
         }
       }
       if (completed) {
-        return true
+        return -1
       }
     }
 
@@ -115,7 +120,7 @@ export class BodyPixWorker {
 
     // 人物以外の部分を裏に書き込み
     this.drawWithCompositing(ctx, background, 'destination-over')
-    return false
+    return this.completedCount
   }
 }
 
