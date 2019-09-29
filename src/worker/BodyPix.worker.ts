@@ -87,6 +87,7 @@ export class BodyPixWorker {
     {
       const ctx = input.getContext('2d')!
       ctx.drawImage(inputImg, 0, 0)
+      inputImg.close()
     }
 
     const ctx = output.getContext('2d')!
