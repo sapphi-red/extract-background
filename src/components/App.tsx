@@ -3,6 +3,16 @@ import './App.sass'
 import InputVideo from './InputVideo'
 import StateContainer from '../container/StateContainer'
 
+import {
+  Paper,
+  Grid,
+  Typography,
+  Button,
+  CircularProgress,
+  LinearProgress
+} from '@material-ui/core'
+import { KeyboardArrowRight } from '@material-ui/icons'
+
 import BodyPixWorkerAbstract, {
   BodyPixWorker,
   Config
@@ -86,28 +96,61 @@ const App: FC = () => {
   const $output = useRef<HTMLDivElement>(null)
 
   return (
-    <div id="App">
-      <p>
+    <Paper id="app">
+      <Typography variant="h5" component="h1">
+        Extract background
+      </Typography>
+      <Typography component="p">
         動画から人物(一人に限る)を取り除いた背景を抽出します。
         定点からの映像でしか正常に動作しません。
         また、Chromeでしか動作しません。
-      </p>
-      <InputVideo />
-      <button
-        disabled={state.fileUrl === '' || state.progress.phase !== 0}
-        onClick={async () => {
-          if ($video.current && $output.current) {
-            await exec($video.current, $output.current, state)
-            state.resetProgress()
-          }
-        }}
+        快適な動作にはそこそこのスペックを要求します。
+      </Typography>
+      <Grid
+        container
+        direction="row"
+        justify="flex-start"
+        alignItems="flex-start"
+        spacing={1}
       >
-        開始
-      </button>
-      {state.progress.phase} | {state.progress.value}
+        <Grid item>
+          <InputVideo />
+        </Grid>
+        <Grid item>
+          <Button
+            variant="contained"
+            color="primary"
+            disabled={state.fileUrl === '' || state.progress.phase !== 0}
+            onClick={async () => {
+              if ($video.current && $output.current) {
+                await exec($video.current, $output.current, state)
+                state.resetProgress()
+              }
+            }}
+          >
+            開始
+            <KeyboardArrowRight />
+            {state.progress.phase !== 0 && (
+              <CircularProgress size={24} className="button-loading" />
+            )}
+          </Button>
+        </Grid>
+      </Grid>
+      <Grid
+        container
+        direction="row"
+        justify="flex-start"
+        alignItems="center"
+        spacing={1}
+      >
+        <Grid item xs>
+          <LinearProgress variant="determinate" value={state.progress.value} />
+        </Grid>
+        <Grid item>{state.progress.value.toFixed(4)}%</Grid>
+      </Grid>
       <video id="input" src={state.fileUrl} controls ref={$video} />
       <div id="output" ref={$output}></div>
-    </div>
+    </Paper>
   )
 }
 

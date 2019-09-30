@@ -1,5 +1,7 @@
 import React, { FC, useState, ChangeEvent, Dispatch } from 'react'
-import StateContainer from "../container/StateContainer"
+import StateContainer from '../container/StateContainer'
+import { Button } from '@material-ui/core'
+import { FolderOpen } from '@material-ui/icons'
 
 const NO_FILE = '選択されていません'
 
@@ -40,17 +42,20 @@ const InputVideo: FC<{}> = () => {
   const disabled = state.progress.value > 0
 
   return (
-    <div className="input-video" data-disabled={disabled}>
-      <label>
-        ファイルを選択:{' '}
-        <input
-          type="file"
-          accept="video/*"
-          disabled={disabled}
-          onChange={e => onChange(e, setFilename, state)}
-        />
-        <span className="filename">{filename}</span>
+    <div className="input-video">
+      <label htmlFor="input-file-dom">
+        <Button variant="contained" component="span" disabled={disabled}>
+          <FolderOpen />
+          ファイルを選択: <span className="filename">{filename}</span>
+        </Button>
       </label>
+      <input
+        id="input-file-dom"
+        type="file"
+        accept="video/*"
+        disabled={disabled}
+        onChange={e => onChange(e, setFilename, state)}
+      />
     </div>
   )
 }
