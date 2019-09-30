@@ -57,7 +57,7 @@ export class BodyPixWorker {
     ctx.drawImage(img, 0, 0)
   }
 
-  private async createBackground(
+  private createBackground(
     seg: PersonSegmentation,
     video: OffscreenCanvas
   ) {
@@ -95,7 +95,9 @@ export class BodyPixWorker {
 
     const personSeg = await this.getPersonSeg(this.bodyPix!, input, theshold)
 
+    let needWrite = false
     if (this.completedPixels === null) {
+      needWrite = true
       this.completedPixels = personSeg.data
       for (let i = 0; i < personSeg.data.length; i++) {
         if (personSeg.data[i] === 0) this.completedCount++
@@ -107,6 +109,7 @@ export class BodyPixWorker {
           completed = false
         }
         if (personSeg.data[i] === 0 && this.completedPixels[i] === 1) {
+          needWrite = true
           this.completedPixels[i] = 0
           this.completedCount++
         }
@@ -116,7 +119,11 @@ export class BodyPixWorker {
       }
     }
 
-    const background = await this.createBackground(personSeg, input)
+    if (!needWrite) {
+      return this.completedCount
+    }
+
+    const background = this.createBackground(personSeg, input)
 
     // 人物以外の部分を裏に書き込み
     this.drawWithCompositing(ctx, background, 'destination-over')
