@@ -1,3 +1,13 @@
+import {
+  setBackend,
+  tensor1d,
+  Tensor1D,
+  tidy,
+  logicalNot,
+  logicalAnd
+} from '@tensorflow/tfjs-core'
+import { setWasmPath } from '@tensorflow/tfjs-backend-wasm'
+import wasmPath from '@tensorflow/tfjs-backend-wasm/dist/tfjs-backend-wasm.wasm'
 import { toMask } from '@tensorflow-models/body-pix'
 import { expose, wrap, Remote, transfer } from 'comlink'
 import { SemanticPersonSegmentation } from '@tensorflow-models/body-pix/dist/types'
@@ -30,7 +40,7 @@ export class ParentWorker {
   >[]
   private applyPromiseChain: Promise<number | void> = Promise.resolve()
 
-  private completedPixels: Uint8Array | null = null
+  private nonCompletedPixels: Tensor1D | null = null
   private completedCount = 0
 
   public async init(
@@ -43,6 +53,14 @@ export class ParentWorker {
     this.outputCanvas = canvas
     this.backgroundCanvas = new OffscreenCanvas(config.width, config.height)
     console.info(`concurrency: ${concurrency}`)
+
+    /*
+    if (this.config.useWasm) {
+      console.info('wasm backend used (parent).')
+      setWasmPath(wasmPath)
+      await setBackend('wasm')
+    }
+    */
 
     const childWorkerPromises = []
     for (let i = 0; i < concurrency; i++) {
@@ -103,32 +121,50 @@ export class ParentWorker {
   }
 
   apply(input: ImageBitmap, personSeg: SemanticPersonSegmentation) {
-    let needWrite = false
-    if (this.completedPixels === null) {
-      needWrite = true
-      this.completedPixels = personSeg.data
-      for (let i = 0; i < personSeg.data.length; i++) {
-        if (personSeg.data[i] === 0) this.completedCount++
-      }
+    if (this.nonCompletedPixels === null) {
+      this.nonCompletedPixels = tensor1d(personSeg.data, 'bool')
+
+      this.completedCount = tidy(
+        () =>
+          logicalNot(this.nonCompletedPixels!)
+            .sum()
+            .asScalar()
+            .dataSync()[0]
+      )
     } else {
-      let completed = true
-      for (let i = 0; i < personSeg.data.length; i++) {
-        if (this.completedPixels[i] === 1) {
-          completed = false
-        }
-        if (personSeg.data[i] === 0 && this.completedPixels[i] === 1) {
-          needWrite = true
-          this.completedPixels[i] = 0
-          this.completedCount++
-        }
-      }
-      if (completed) {
+      const newNonCompletedPixels = logicalAnd(
+        personSeg.data,
+        this.nonCompletedPixels
+      ) as Tensor1D
+
+      const isCompleted = !tidy(
+        () =>
+          newNonCompletedPixels
+            .any()
+            .asScalar()
+            .dataSync()[0]
+      )
+
+      if (isCompleted) {
+        this.nonCompletedPixels.dispose()
+        newNonCompletedPixels.dispose()
         return -1
       }
-    }
 
-    if (!needWrite) {
-      return this.completedCount
+      const newCompletedCount = tidy(
+        () =>
+          logicalNot(newNonCompletedPixels)
+            .sum()
+            .asScalar()
+            .dataSync()[0]
+      )
+      if (this.completedCount === newCompletedCount) {
+        newNonCompletedPixels.dispose()
+        return this.completedCount
+      }
+      this.completedCount = newCompletedCount
+      this.nonCompletedPixels.dispose()
+      this.nonCompletedPixels = newNonCompletedPixels
     }
 
     const background = this.createBackground(personSeg, input)
