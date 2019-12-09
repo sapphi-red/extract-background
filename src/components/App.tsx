@@ -51,6 +51,7 @@ const exec = async (
   const params = new URLSearchParams(window.location.search.slice(1))
   const pTimeFlag = params.get('p_time') === 'true'
   const debugFlag = params.get('debug') === 'true'
+  const wasmFlag = params.get('wasm') === 'true'
   const singleThreadFlag = params.get('single') === 'true'
 
   await waitVideoLoad($video)
@@ -74,7 +75,8 @@ const exec = async (
       duration,
       debugFlag,
       startPos: state.startPos,
-      endPos: state.endPos
+      endPos: state.endPos,
+      useWasm: wasmFlag
     },
     output,
     singleThreadFlag ? 1 : Math.max(navigator.hardwareConcurrency - 1, 1)
