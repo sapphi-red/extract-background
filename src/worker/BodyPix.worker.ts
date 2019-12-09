@@ -1,14 +1,12 @@
 import {
   load as loadBodyPix,
   BodyPix,
-  toMaskImageData
+  toMask
 } from '@tensorflow-models/body-pix'
 import { expose } from 'comlink'
-import { PersonSegmentation } from '@tensorflow-models/body-pix/dist/types'
+import { SemanticPersonSegmentation } from '@tensorflow-models/body-pix/dist/types'
 
 declare const self: Worker
-
-const STRIDE = 32
 
 export interface Config {
   width: number
@@ -58,10 +56,10 @@ export class BodyPixWorker {
   }
 
   private createBackground(
-    seg: PersonSegmentation,
+    seg: SemanticPersonSegmentation,
     video: OffscreenCanvas
   ) {
-    const maskImageData = toMaskImageData(seg)
+    const maskImageData = toMask(seg)
     const background = this.backgroundCanvas
     const ctx = background.getContext('2d')!
     this.resetCanvas(ctx)
@@ -75,11 +73,12 @@ export class BodyPixWorker {
     input: OffscreenCanvas,
     theshold: number
   ) {
-    return bodyPix.estimatePersonSegmentation(
-      (input as unknown) as HTMLCanvasElement,
-      STRIDE,
-      theshold
-    )
+    const context = input.getContext('2d')!
+    const imageData = context.getImageData(0, 0, input.width, input.height)
+    return bodyPix.segmentPerson(imageData, {
+      segmentationThreshold: theshold
+      //internalResolution: 'low'
+    })
   }
 
   async apply(inputImg: ImageBitmap, theshold: number) {
