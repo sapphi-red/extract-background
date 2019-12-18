@@ -18,6 +18,7 @@ import BodyPixWorkerAbstract, {
   Config
 } from '../worker/BodyPix.worker'
 import { wrap, transfer } from 'comlink'
+import PositionSetter from './PositionSetter'
 
 const THESHOLDS = [0.05, 0.1, 0.2, 0.3, 0.5, 0.8, 1.0]
 
@@ -64,9 +65,9 @@ const exec = async (
 
   for (const theshold of THESHOLDS) {
     console.log(`start THESHOLD: ${theshold}`)
-    $video.currentTime = 0
+    $video.currentTime = state.startPos
     state.incrementProgressPhase()
-    while ($video.currentTime < duration) {
+    while ($video.currentTime < duration - state.endPos) {
       if ($video.readyState < 3) {
         await new Promise(resolve => {
           $video.oncanplay = resolve
@@ -105,6 +106,7 @@ const App: FC = () => {
         定点からの映像でしか正常に動作しません。
         また、Chromeでしか動作しません。
         快適な動作にはそこそこのスペックを要求します。
+        Positionは処理に利用しない前後の秒数を指定できます。
       </Typography>
       <Grid
         container
@@ -113,6 +115,9 @@ const App: FC = () => {
         alignItems="flex-start"
         spacing={1}
       >
+        <Grid item xs={12}>
+          <PositionSetter />
+        </Grid>
         <Grid item>
           <InputVideo />
         </Grid>

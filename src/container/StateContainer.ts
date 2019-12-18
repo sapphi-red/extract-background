@@ -8,16 +8,19 @@ interface Progress {
 
 export default createContainer(() => {
   const [fileUrl, setFileUrl] = useState('')
+
   const [progress, setProgress] = useState<Progress>({
     phase: 0,
     value: 0
   })
-
   const setProgressValue = (value: number) =>
     setProgress(progress => ({ ...progress, value }))
   const incrementProgressPhase = () =>
     setProgress(progress => ({ ...progress, phase: progress.phase + 1 }))
   const resetProgress = () => setProgress({ phase: 0, value: 0 })
+
+  const [startPos, setStartPos] = useState(0)
+  const [endPos, setEndPos] = useState(0)
 
   return {
     fileUrl,
@@ -25,6 +28,10 @@ export default createContainer(() => {
     progress,
     setProgressValue,
     incrementProgressPhase,
-    resetProgress
+    resetProgress,
+    startPos,
+    setStartPos,
+    endPos,
+    setEndPos
   }
 })
