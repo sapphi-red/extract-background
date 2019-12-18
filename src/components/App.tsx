@@ -37,6 +37,10 @@ const exec = async (
   $output: HTMLDivElement,
   state: ReturnType<typeof StateContainer.useContainer>
 ) => {
+  const params = new URLSearchParams(window.location.search.slice(1))
+  const pTimeFlag = params.get('p_time') === 'true'
+  const debugFlag = params.get('debug') === 'true'
+
   if ($video.readyState < 3) {
     await new Promise(resolve => {
       $video.oncanplay = resolve
@@ -50,7 +54,7 @@ const exec = async (
   $canvas.width = width
   $canvas.height = height
   $output.appendChild($canvas)
-  console.log(width, height)
+  if (debugFlag) console.log(width, height)
 
   const { duration } = $video
   const output = $canvas.transferControlToOffscreen()
@@ -63,16 +67,13 @@ const exec = async (
     output
   )
 
-  const params = new URLSearchParams(window.location.search.slice(1))
-  const pTimeFlag = params.get('p_time') === 'true'
-
   let startTime = 0
   if (pTimeFlag) {
     startTime = performance.now()
   }
 
   for (const theshold of THESHOLDS) {
-    console.log(`start THESHOLD: ${theshold}`)
+    if (debugFlag) console.log(`start THESHOLD: ${theshold}`)
     $video.currentTime = state.startPos
     state.incrementProgressPhase()
     while ($video.currentTime < duration - state.endPos) {
@@ -94,7 +95,7 @@ const exec = async (
           }
           return
         }
-        console.log((progress / (width * height)) * 100)
+        if (debugFlag) console.log((progress / (width * height)) * 100)
         state.setProgressValue((progress / (width * height)) * 100)
       } catch (e) {
         console.warn(e)
