@@ -63,6 +63,14 @@ const exec = async (
     output
   )
 
+  const params = new URLSearchParams(window.location.search.slice(1))
+  const pTimeFlag = params.get('p_time') === 'true'
+
+  let startTime = 0
+  if (pTimeFlag) {
+    startTime = performance.now()
+  }
+
   for (const theshold of THESHOLDS) {
     console.log(`start THESHOLD: ${theshold}`)
     $video.currentTime = state.startPos
@@ -79,7 +87,13 @@ const exec = async (
           transfer(imageb, [imageb]),
           theshold
         )
-        if (progress === -1) return
+        if (progress === -1) {
+          if (pTimeFlag) {
+            const endTime = performance.now()
+            console.info(`Elapsed Time: ${(endTime - startTime) / 1000}s`)
+          }
+          return
+        }
         console.log((progress / (width * height)) * 100)
         state.setProgressValue((progress / (width * height)) * 100)
       } catch (e) {
