@@ -13,23 +13,34 @@ import {
 } from '@material-ui/core'
 import { KeyboardArrowRight } from '@material-ui/icons'
 
-import BodyPixWorkerAbstract, {
-  BodyPixWorker,
+import ParentWorkerAbstract, {
+  ParentWorker,
   Config
-} from '../worker/BodyPix.worker'
-import { wrap, transfer } from 'comlink'
+} from '../worker/Parent.worker'
+import { wrap, transfer, proxy } from 'comlink'
 import PositionSetter from './PositionSetter'
 
-const THESHOLDS = [0.05, 0.1, 0.2, 0.3, 0.5, 0.8, 1.0]
-
-const getBodyPix = async (config: Config, outputCanvas: OffscreenCanvas) => {
-  const WrappedBodyPix = wrap<typeof BodyPixWorker>(new BodyPixWorkerAbstract())
+const getBodyPix = async (
+  config: Config,
+  outputCanvas: OffscreenCanvas,
+  concurrency: number
+) => {
+  const WrappedBodyPix = wrap<typeof ParentWorker>(new ParentWorkerAbstract())
   const bodyPix = await new WrappedBodyPix()
   await bodyPix.init(
     config,
-    transfer(outputCanvas, [(outputCanvas as unknown) as Transferable])
+    transfer(outputCanvas, [(outputCanvas as unknown) as Transferable]),
+    concurrency
   )
   return bodyPix
+}
+
+const waitVideoLoad = async ($video: HTMLVideoElement) => {
+  if ($video.readyState < 3) {
+    await new Promise(resolve => {
+      $video.oncanplay = resolve
+    })
+  }
 }
 
 const exec = async (
@@ -40,12 +51,9 @@ const exec = async (
   const params = new URLSearchParams(window.location.search.slice(1))
   const pTimeFlag = params.get('p_time') === 'true'
   const debugFlag = params.get('debug') === 'true'
+  const singleThreadFlag = params.get('single') === 'true'
 
-  if ($video.readyState < 3) {
-    await new Promise(resolve => {
-      $video.oncanplay = resolve
-    })
-  }
+  await waitVideoLoad($video)
   const imgb = await createImageBitmap($video)
   const { width, height } = imgb
 
@@ -62,9 +70,14 @@ const exec = async (
   const bodyPix = await getBodyPix(
     {
       width,
-      height
+      height,
+      duration,
+      debugFlag,
+      startPos: state.startPos,
+      endPos: state.endPos
     },
-    output
+    output,
+    singleThreadFlag ? 1 : Math.max(navigator.hardwareConcurrency - 1, 1)
   )
 
   let startTime = 0
@@ -72,37 +85,44 @@ const exec = async (
     startTime = performance.now()
   }
 
-  for (const theshold of THESHOLDS) {
-    if (debugFlag) console.log(`start THESHOLD: ${theshold}`)
-    $video.currentTime = state.startPos
-    state.incrementProgressPhase()
-    while ($video.currentTime < duration - state.endPos) {
-      if ($video.readyState < 3) {
-        await new Promise(resolve => {
-          $video.oncanplay = resolve
-        })
-      }
+  return new Promise(resolve => {
+    const retryFromStart = () => {
+      $video.currentTime = state.startPos
+      state.incrementProgressPhase()
+    }
+    const sendCurrentImage = async () => {
+      await waitVideoLoad($video)
       try {
-        const imageb = await createImageBitmap($video)
-        const progress = await bodyPix.apply(
-          transfer(imageb, [imageb]),
-          theshold
-        )
-        if (progress === -1) {
-          if (pTimeFlag) {
-            const endTime = performance.now()
-            console.info(`Elapsed Time: ${(endTime - startTime) / 1000}s`)
-          }
-          return
-        }
-        if (debugFlag) console.log((progress / (width * height)) * 100)
-        state.setProgressValue((progress / (width * height)) * 100)
+        const img = await createImageBitmap($video)
+        return transfer([img, $video.currentTime], [img])
       } catch (e) {
         console.warn(e)
       }
-      $video.currentTime += 1
+      return null
     }
-  }
+    const tick = () => {
+      $video.currentTime++
+    }
+    const notifyProgress = (progress: number) => {
+      if (progress === -1) {
+        if (pTimeFlag) {
+          const endTime = performance.now()
+          console.info(`Elapsed Time: ${(endTime - startTime) / 1000}s`)
+        }
+        resolve()
+        return
+      }
+      if (debugFlag) console.log((progress / (width * height)) * 100)
+      state.setProgressValue((progress / (width * height)) * 100)
+    }
+
+    bodyPix.run(
+      proxy(sendCurrentImage),
+      proxy(retryFromStart),
+      proxy(tick),
+      proxy(notifyProgress)
+    )
+  })
 }
 
 const App: FC = () => {
