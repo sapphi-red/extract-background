@@ -48,6 +48,7 @@ export class ChildWorker {
     theshold: number
   ): Promise<SemanticPersonSegmentation> {
     const personSeg = await this._getPersonSeg(this.bodyPix!, input, theshold)
+    input.close()
     return transfer(personSeg, [personSeg.data.buffer])
   }
 }

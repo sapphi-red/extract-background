@@ -174,6 +174,7 @@ export class ParentWorker {
             if (progress === -1) {
               finish = true
             }
+            input.close()
           })
 
         if (finish) return
