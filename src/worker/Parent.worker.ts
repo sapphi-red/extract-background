@@ -1,5 +1,3 @@
-import { setBackend } from '@tensorflow/tfjs-core'
-import '@tensorflow/tfjs-backend-wasm'
 import { toMask } from '@tensorflow-models/body-pix'
 import { expose, wrap, Remote, transfer } from 'comlink'
 import { SemanticPersonSegmentation } from '@tensorflow-models/body-pix/dist/types'
@@ -45,10 +43,6 @@ export class ParentWorker {
     this.outputCanvas = canvas
     this.backgroundCanvas = new OffscreenCanvas(config.width, config.height)
     console.info(`concurrency: ${concurrency}`)
-    if (this.config.useWasm) {
-      console.info('wasm backend used.')
-      await setBackend('wasm')
-    }
 
     const childWorkerPromises = []
     for (let i = 0; i < concurrency; i++) {
