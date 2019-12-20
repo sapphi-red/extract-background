@@ -4,8 +4,6 @@ const path = require("path")
 const appDirectory = fs.realpathSync(process.cwd())
 const resolveApp = relativePath => path.resolve(appDirectory, relativePath)
 const getCacheIdentifier = require("react-dev-utils/getCacheIdentifier")
-const CopyWebpackPlugin = require("copy-webpack-plugin")
-const ReplacePlugin = require("webpack-plugin-replace")
 
 const isEnvDevelopment = process.env.NODE_ENV === "development"
 const isEnvProduction = process.env.NODE_ENV === "production"
@@ -70,24 +68,16 @@ module.exports = function override(config, env) {
   config.output["globalObject"] = "self"
 
   // wasm -----------------
-  if (!config.plugins) config.plugins = []
-  config.plugins.push(
-    new CopyWebpackPlugin([
-      {
-        from: "node_modules/@tensorflow/tfjs-backend-wasm/wasm-out/tfjs-backend-wasm.wasm",
-        to: "",
-      }
-    ])
+  const wasmExt = /\.wasm$/i
+  const fileLoaderRuleIndex = config.module.rules[2].oneOf.findIndex(
+    r => r.loader && r.loader.includes("file-loader")
   )
-
-  config.plugins.push(
-    new ReplacePlugin({
-      include: [/node_modules\/@tensorflow\/tfjs-backend-wasm\/wasm-out/],
-      values: {
-        "ENVIRONMENT_IS_WORKER=false": "ENVIRONMENT_IS_WORKER=true"
-      }
-    })
-  )
+  config.module.rules[2].oneOf[fileLoaderRuleIndex].exclude.push(wasmExt)
+  config.module.rules.push({
+    test: wasmExt,
+    type: "javascript/auto",
+    loader: "file-loader"
+  })
 
   return config
 }
