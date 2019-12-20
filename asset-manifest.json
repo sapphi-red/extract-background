@@ -1,28 +1,29 @@
 {
   "files": {
     "main.css": "/static/css/main.8a78db86.chunk.css",
-    "main.js": "/static/js/main.c5b8cbd6.chunk.js",
-    "main.js.map": "/static/js/main.c5b8cbd6.chunk.js.map",
+    "main.js": "/static/js/main.d5788198.chunk.js",
+    "main.js.map": "/static/js/main.d5788198.chunk.js.map",
     "runtime-main.js": "/static/js/runtime-main.ea472412.js",
     "runtime-main.js.map": "/static/js/runtime-main.ea472412.js.map",
     "static/js/2.d36b8fe8.chunk.js": "/static/js/2.d36b8fe8.chunk.js",
     "static/js/2.d36b8fe8.chunk.js.map": "/static/js/2.d36b8fe8.chunk.js.map",
-    "08ad4d9a10c15430918d.worker.js": "/08ad4d9a10c15430918d.worker.js",
-    "08ad4d9a10c15430918d.worker.js.LICENSE": "/08ad4d9a10c15430918d.worker.js.LICENSE",
-    "08ad4d9a10c15430918d.worker.js.map": "/08ad4d9a10c15430918d.worker.js.map",
-    "fddc3a6c201cc111b2ea.worker.js": "/fddc3a6c201cc111b2ea.worker.js",
-    "fddc3a6c201cc111b2ea.worker.js.LICENSE": "/fddc3a6c201cc111b2ea.worker.js.LICENSE",
-    "fddc3a6c201cc111b2ea.worker.js.map": "/fddc3a6c201cc111b2ea.worker.js.map",
+    "206b5e87bc011813b4b7.worker.js": "/206b5e87bc011813b4b7.worker.js",
+    "206b5e87bc011813b4b7.worker.js.LICENSE": "/206b5e87bc011813b4b7.worker.js.LICENSE",
+    "206b5e87bc011813b4b7.worker.js.map": "/206b5e87bc011813b4b7.worker.js.map",
+    "323dbd74d82b749b483a.worker.js": "/323dbd74d82b749b483a.worker.js",
+    "323dbd74d82b749b483a.worker.js.LICENSE": "/323dbd74d82b749b483a.worker.js.LICENSE",
+    "323dbd74d82b749b483a.worker.js.map": "/323dbd74d82b749b483a.worker.js.map",
     "index.html": "/index.html",
-    "precache-manifest.1be9a8243718fdf6f02fa3bc282cf0ba.js": "/precache-manifest.1be9a8243718fdf6f02fa3bc282cf0ba.js",
+    "precache-manifest.2fa7d826d9d1b107e7f0120568fca0ca.js": "/precache-manifest.2fa7d826d9d1b107e7f0120568fca0ca.js",
     "service-worker.js": "/service-worker.js",
     "static/css/main.8a78db86.chunk.css.map": "/static/css/main.8a78db86.chunk.css.map",
-    "static/js/2.d36b8fe8.chunk.js.LICENSE": "/static/js/2.d36b8fe8.chunk.js.LICENSE"
+    "static/js/2.d36b8fe8.chunk.js.LICENSE": "/static/js/2.d36b8fe8.chunk.js.LICENSE",
+    "tfjs-backend-wasm.wasm": "/tfjs-backend-wasm.wasm"
   },
   "entrypoints": [
     "static/js/runtime-main.ea472412.js",
     "static/js/2.d36b8fe8.chunk.js",
     "static/css/main.8a78db86.chunk.css",
-    "static/js/main.c5b8cbd6.chunk.js"
+    "static/js/main.d5788198.chunk.js"
   ]
 }
