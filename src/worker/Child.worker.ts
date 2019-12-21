@@ -1,5 +1,4 @@
 import { setBackend } from '@tensorflow/tfjs-core'
-import { setWasmPath } from '@tensorflow/tfjs-backend-wasm'
 import wasmPath from '@tensorflow/tfjs-backend-wasm/dist/tfjs-backend-wasm.wasm'
 import { load as loadBodyPix, BodyPix } from '@tensorflow-models/body-pix'
 import { expose, transfer } from 'comlink'
@@ -28,6 +27,7 @@ export class ChildWorker {
 
     this.bodyPixLoading = true
     if (this.config.useWasm) {
+      const { setWasmPath } = await import('@tensorflow/tfjs-backend-wasm')
       console.info('wasm backend used.')
       setWasmPath(wasmPath)
       await setBackend('wasm')
