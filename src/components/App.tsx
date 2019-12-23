@@ -57,6 +57,7 @@ const exec = async (
   await waitVideoLoad($video)
   const imgb = await createImageBitmap($video)
   const { width, height } = imgb
+  imgb.close()
 
   $output.innerHTML = ''
   const $canvas = document.createElement('canvas')
