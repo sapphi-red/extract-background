@@ -55,9 +55,8 @@ const exec = async (
   const singleThreadFlag = params.get('single') === 'true'
 
   await waitVideoLoad($video)
-  const imgb = await createImageBitmap($video)
-  const { width, height } = imgb
-  imgb.close()
+  const width = $video.videoWidth
+  const height = $video.videoHeight
 
   $output.innerHTML = ''
   const $canvas = document.createElement('canvas')
